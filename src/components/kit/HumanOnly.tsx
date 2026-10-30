@@ -8,7 +8,11 @@ export function isAutomated() {
   return navigator.webdriver === true || /HeadlessChrome|PhantomJS/i.test(navigator.userAgent);
 }
 
-const EVENTS = ["click", "dblclick", "pointerdown", "pointerup", "mousedown", "mouseup", "touchstart", "touchend", "keydown", "keyup", "input", "change", "submit"];
+/**
+ * Chỉ chặn cú bấm, chạm, phím; không chặn sự kiện nhập chữ (input, change): bộ gõ tiếng Việt dạng tiện ích trình duyệt
+ * điền chữ bằng mã lệnh, chặn thì học sinh không gõ được tên. Ô nhập chữ chỉ có ở giấy thông hành, không dùng để chơi.
+ */
+const EVENTS = ["click", "dblclick", "pointerdown", "pointerup", "mousedown", "mouseup", "touchstart", "touchend", "keydown", "keyup"];
 
 /**
  * Chỉ nhận thao tác của người thật (bản đưa lên mạng): cú bấm, chạm, phím do mã lệnh tạo ra (gõ lệnh trong console,
