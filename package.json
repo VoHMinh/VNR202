@@ -6,21 +6,44 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "class": "next build && node scripts/class.mjs",
+    "typecheck": "tsc --noEmit",
+    "art": "node --dns-result-order=ipv4first scripts/fetch-art.mjs",
+    "demo": "tsx scripts/demo-room.ts"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "canvas-confetti": "^1.9.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "gsap": "^3.15.0",
+    "lucide-react": "^1.65.0",
+    "modern-screenshot": "^4.7.0",
+    "motion": "^14.8.0",
     "next": "16.4.3",
+    "qrcode.react": "^4.2.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^3.7.0",
+    "zustand": "^5.0.16"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/d3-geo": "^3.1.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/topojson-client": "^3.1.5",
+    "d3-geo": "^3.1.1",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "topojson-client": "^3.1.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "world-atlas": "^2.0.2"
   }
 }

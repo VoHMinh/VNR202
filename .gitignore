@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dữ liệu phòng chơi tạm thời
+.data/
+
+# ảnh gốc tải về khi chạy scripts/fetch-art.mjs
+/.art-cache/
+
+# cấu hình công cụ trên máy (xem trước của Claude)
+/.claude/
