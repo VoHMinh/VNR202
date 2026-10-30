@@ -7,7 +7,7 @@ import { Stamp } from "@/components/kit/Stamp";
 import { cn } from "@/lib/cn";
 import { sfx } from "@/lib/sfx";
 import { NET_PUZZLES } from "./network-puzzles";
-import { GRAIN, WoodSurface, isTypingTarget, mulberry32, useBox, useFinishOnce } from "./shared";
+import { GRAIN, isTypingTarget, mulberry32, qa, useBox, useFinishOnce, WoodSurface } from "./shared";
 import type { MiniProps } from "./types";
 
 /*
@@ -409,7 +409,7 @@ export function Network({ seconds, startedAt, onFinish }: MiniProps) {
       data-path-len={path.length}
       data-total={pz.total}
       data-path={path.join(",")}
-      data-solution={pz.solution.join(",")}
+      {...qa({ "data-solution": pz.solution.join(",") })}
       data-bases={pz.bases.join(",")}
       data-posts={pz.posts.join(",")}
     >

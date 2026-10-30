@@ -25,14 +25,19 @@ export function PlayApp() {
   const [exit, setExit] = useState(false);
   const hud = phase === "brief" || phase === "ready" || phase === "task" || phase === "result" || phase === "board";
 
-  // Đang chơi trong phòng: nếu chủ phòng kết thúc trận thì chuyển sang tổng kết.
+  // Đang chơi trong phòng: chủ phòng kết thúc trận thì chuyển sang tổng kết;
+  // server ghi nhận ít nhiệm vụ hơn máy mình (lần nộp bị mất vì mạng chập chờn) thì gửi bù.
   useEffect(() => {
     if (!room || phase === "lobby" || phase === "done") return;
     let alive = true;
     const id = setInterval(async () => {
       const res = await fetch(`/api/rooms/${encodeURIComponent(room)}`, { cache: "no-store" }).catch(() => null);
-      const data = res?.ok ? await res.json() : null;
-      if (alive && data?.status === "ended") endByHost("Chủ phòng đã kết thúc trận");
+      const data = res?.ok ? ((await res.json()) as { status?: string; players?: { id: string; done: number }[] }) : null;
+      if (!alive || !data) return;
+      const st = useStory.getState();
+      const me = data.players?.find((p) => p.id === st.session.playerId);
+      if (me && me.done < st.answers.length) st.resync();
+      if (data.status === "ended") endByHost("Chủ phòng đã kết thúc trận");
     }, 5000);
     return () => {
       alive = false;

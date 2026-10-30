@@ -19,6 +19,10 @@ export interface RoomPlayer {
   correct: number;
   rank: number;
   finished: boolean;
+  /** Số lần rời màn hình trò chơi trong lúc làm nhiệm vụ (chỉ màn chiếu hiện). */
+  away?: number;
+  /** Số nhiệm vụ nộp nhanh bất thường hoặc không đối chiếu được thời gian (chỉ màn chiếu hiện). */
+  flags?: number;
 }
 
 export interface RoomView {

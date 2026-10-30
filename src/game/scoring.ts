@@ -20,6 +20,15 @@ export interface Answer {
   ms: number;
   /** Điểm trò chơi nhỏ, 0 đến 1000. */
   mini?: number;
+  /** Số lần rời màn hình trò chơi (chuyển tab, chuyển ứng dụng) trong lúc làm nhiệm vụ. */
+  away?: number;
+  /** Server ghi: thời gian thật đo từ lúc bắt đầu nhiệm vụ tới lúc nộp (mili giây). */
+  sms?: number;
+  /**
+   * Server ghi: "fast" làm xong nhanh bất thường (điểm bị giảm theo tỉ lệ), "unverified" không có mốc bắt đầu
+   * để đối chiếu (điểm bị giới hạn), "resync" được gửi bù sau khi mạng chập chờn.
+   */
+  flag?: "fast" | "unverified" | "resync";
 }
 
 export interface Scored {

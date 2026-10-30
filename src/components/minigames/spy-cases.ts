@@ -1,26 +1,15 @@
-import { SPY_ALIASES, SPY_BASES } from "@/game/data/minis";
+import { SPY_EASY, SPY_HARD, type SpyCaseFile } from "@/game/data/minis";
 import { mulberry32 } from "./shared";
 
 /*
- * Sinh hai vụ cho trò "Kẻ chỉ điểm" từ mốc bắt đầu (cùng mốc thì cùng đề, người chơi khác nhau thì đề khác nhau).
- * Nguyên tắc đơn tuyến: mỗi giao liên chỉ nắm 2–3 cơ sở. Các cơ sở bị phá trùng khít với tập cơ sở của đúng một người.
- * Người bị nghi còn lại là mồi nhử: nắm thừa (đủ các cơ sở bị phá cộng thêm một cơ sở còn an toàn),
- * nắm thiếu (chỉ một phần các cơ sở bị phá) hoặc nắm lẫn (vừa cơ sở bị phá vừa cơ sở an toàn).
+ * Trò "Kẻ chỉ điểm" (đầu năm 1931): mỗi lượt chơi lấy một vụ dễ rồi một vụ khó (theo mốc bắt đầu, nên bạn ngồi cạnh
+ * thường gặp vụ khác), xáo thứ tự lời khai và vật chứng. Người chơi đối chất một lời khai với một vật chứng:
+ * đúng cặp mâu thuẫn che giấu lúc kẻ chỉ điểm liên lạc với mật thám thì vạch được hắn.
  */
 
-export interface SpySuspect {
-  alias: string;
-  /** Chỉ số các cơ sở người này nắm được, theo thứ tự hiển thị của vụ (đã sắp xếp tăng dần). */
-  knows: number[];
-}
-
-export interface SpyCase {
-  /** Tên vỏ bọc các cơ sở, theo thứ tự hiển thị. */
-  bases: string[];
-  raided: boolean[];
-  suspects: SpySuspect[];
-  /** Vị trí kẻ chỉ điểm trong `suspects`. */
-  traitor: number;
+export interface SpyCase extends SpyCaseFile {
+  /** 0: vụ thứ nhất (dễ), 1: vụ thứ hai (khó). */
+  level: 0 | 1;
 }
 
 type Rnd = () => number;
@@ -35,90 +24,51 @@ export function shuffle<T>(rnd: Rnd, arr: readonly T[]): T[] {
 }
 
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
-const keyOf = (s: readonly number[]) => [...s].sort((a, b) => a - b).join(",");
-const pickOne = <T,>(rnd: Rnd, arr: readonly T[]) => arr[Math.floor(rnd() * arr.length)];
 
-/** Đề hợp lệ: đúng một người nắm khít các cơ sở bị phá, không hai người nào nắm giống nhau, mỗi người nắm 2–3 cơ sở. */
-export function checkCase(c: SpyCase): boolean {
-  const raided = keyOf(c.raided.flatMap((r, i) => (r ? [i] : [])));
-  const keys = c.suspects.map((s) => keyOf(s.knows));
-  return (
-    c.raided.some((r) => r) &&
-    c.raided.some((r) => !r) &&
-    keys.filter((k) => k === raided).length === 1 &&
-    keys[c.traitor] === raided &&
-    new Set(keys).size === keys.length &&
-    c.suspects.every((s) => s.knows.length >= 2 && s.knows.length <= 3 && new Set(s.knows).size === s.knows.length && s.knows.every((i) => i >= 0 && i < c.bases.length))
-  );
+/** Xáo thứ tự hiển thị lời khai và vật chứng, đánh lại chỉ số đáp án cho khớp. */
+function arrange(rnd: Rnd, c: SpyCaseFile, level: 0 | 1): SpyCase {
+  const so = shuffle(rnd, range(c.suspects.length));
+  const eo = shuffle(rnd, range(c.evidence.length));
+  const s = (old: number) => (old < 0 ? -1 : so.indexOf(old));
+  const e = (old: number) => eo.indexOf(old);
+  return {
+    ...c,
+    level,
+    suspects: so.map((i) => c.suspects[i]),
+    evidence: eo.map((i) => ({ ...c.evidence[i], about: s(c.evidence[i].about) })),
+    answer: [s(c.answer[0]), e(c.answer[1])],
+    decoy: c.decoy ? [s(c.decoy[0]), e(c.decoy[1]), c.decoy[2]] : undefined,
+  };
 }
 
-/** Vụ hai cơ sở bị phá: kẻ chỉ điểm, một người nắm thừa (bẫy "biết hết các nơi bị phá") và hai người nắm lẫn. */
-function setsFor2(rnd: Rnd, R: number[], S: number[]): number[][] {
-  const [a, b] = shuffle(rnd, R);
-  const [x, y] = shuffle(rnd, S);
-  const fourth = pickOne(rnd, [
-    [b, x, y],
-    [x, y],
-    [b, x],
-  ]);
-  return [[a, b], [a, b, x], [a, y], fourth];
-}
-
-/** Vụ ba cơ sở bị phá: kẻ chỉ điểm, hai người nắm thiếu (toàn cơ sở bị phá nhưng chưa đủ), hai người nắm lẫn. */
-function setsFor3(rnd: Rnd, R: number[], S: number[]): number[][] {
-  const [a, b, c] = shuffle(rnd, R);
-  const safe = shuffle(rnd, S);
-  const lone = pickOne(rnd, [a, b, c]);
-  return [[a, b, c], [a, b], [b, c], [a, c, safe[0]], safe.length >= 3 ? [lone, safe[1], safe[2]] : [lone, safe[1]]];
-}
-
-function build(rnd: Rnd, nb: number, nr: number, ns: number): SpyCase {
-  for (let attempt = 0; attempt < 40; attempt++) {
-    const bases = shuffle(rnd, SPY_BASES).slice(0, nb);
-    const order = shuffle(rnd, range(nb));
-    const R = order.slice(0, nr).sort((p, q) => p - q);
-    const S = order.slice(nr).sort((p, q) => p - q);
-    const sets = (nr === 2 ? setsFor2(rnd, R, S) : setsFor3(rnd, R, S)).slice(0, ns);
-    const aliases = shuffle(rnd, SPY_ALIASES).slice(0, ns);
-    const seat = shuffle(rnd, range(sets.length));
-    const suspects = seat.map((k, j) => ({ alias: aliases[j], knows: [...sets[k]].sort((p, q) => p - q) }));
-    const c: SpyCase = { bases, raided: range(nb).map((i) => R.includes(i)), suspects, traitor: seat.indexOf(0) };
-    if (checkCase(c)) return c;
-  }
-  return nr === 2 ? FALLBACK[0] : FALLBACK[1];
-}
-
-/** Đề dự phòng (không bao giờ cần tới nếu bộ sinh chạy đúng, nhưng giữ cho chắc). */
-const FALLBACK: SpyCase[] = [
-  {
-    bases: ["Hiệu may", "Nhà trọ", "Hiệu sách", "Quán nước"],
-    raided: [true, false, true, false],
-    suspects: [
-      { alias: "Chị Hai", knows: [0, 1, 2] },
-      { alias: "Chú Ba", knows: [0, 2] },
-      { alias: "Anh Cả", knows: [1, 2, 3] },
-      { alias: "Cô Tư", knows: [0, 3] },
-    ],
-    traitor: 1,
-  },
-  {
-    bases: ["Hiệu thuốc bắc", "Hiệu ảnh", "Xưởng mộc", "Hiệu giặt", "Hiệu sách", "Nhà trọ"],
-    raided: [true, false, true, false, true, false],
-    suspects: [
-      { alias: "Bác Năm", knows: [0, 2] },
-      { alias: "Cậu Sáu", knows: [0, 2, 4] },
-      { alias: "Ông Đồ", knows: [2, 4, 5] },
-      { alias: "Anh Cả", knows: [2, 4] },
-      { alias: "Cô Tư", knows: [0, 1, 3] },
-    ],
-    traitor: 1,
-  },
-];
-
-/** Hai vụ: vụ 1 có 4 cơ sở, 4 người bị nghi, 2 nơi bị phá; vụ 2 có 5–6 cơ sở, 5 người bị nghi, 3 nơi bị phá. */
 export function makeSpyCases(seed: number): SpyCase[] {
   const rnd = mulberry32((Math.floor(seed) ^ 0x51ed270b) >>> 0);
-  const first = build(rnd, 4, 2, 4);
-  const second = build(rnd, rnd() < 0.5 ? 5 : 6, 3, 5);
-  return [first, second];
+  const easy = SPY_EASY[Math.floor(rnd() * SPY_EASY.length)];
+  const hard = SPY_HARD[Math.floor(rnd() * SPY_HARD.length)];
+  return [arrange(rnd, easy, 0), arrange(rnd, hard, 1)];
+}
+
+/**
+ * Kết quả một lần đối chất: "hit" vạch được kẻ chỉ điểm; "decoy" có mâu thuẫn nhưng chỉ là chuyện vặt;
+ * "match" lời khai khớp với vật chứng; "other" vật chứng không nói về người này.
+ */
+export type Verdict = "hit" | "decoy" | "match" | "other";
+
+export function confront(c: SpyCase, s: number, e: number): Verdict {
+  if (c.answer[0] === s && c.answer[1] === e) return "hit";
+  if (c.decoy && c.decoy[0] === s && c.decoy[1] === e) return "decoy";
+  return c.evidence[e].about === s ? "match" : "other";
+}
+
+/** Điểm tối đa từng vụ (vụ khó nhiều hơn), mốc thời gian giải để được trọn điểm, mức trừ mỗi lần đối chất sai. */
+export const CASE_MAX = [450, 550] as const;
+const FAST = [20, 30];
+const SLOW = [60, 75];
+export const WRONG = 70;
+
+/** Giải trong mốc FAST thì trọn điểm, chậm dần tới SLOW còn 60%; mỗi lần đối chất sai trừ 70, giải được thì ít nhất còn 1/4. */
+export function caseScore(level: 0 | 1, sec: number, wrongs: number) {
+  const max = CASE_MAX[level];
+  const slow = Math.min(1, Math.max(0, (sec - FAST[level]) / (SLOW[level] - FAST[level])));
+  return Math.round(Math.max(max * 0.25, max * (1 - 0.4 * slow) - WRONG * wrongs));
 }

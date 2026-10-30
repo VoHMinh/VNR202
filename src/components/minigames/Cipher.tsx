@@ -7,7 +7,7 @@ import { Btn } from "@/components/kit/Btn";
 import { Stamp } from "@/components/kit/Stamp";
 import { Typed } from "@/components/kit/Typed";
 import { cn } from "@/lib/cn";
-import { WoodSurface, isTypingTarget, mulberry32, useBox, useFinishOnce } from "./shared";
+import { isTypingTarget, mulberry32, qa, useBox, useFinishOnce, WoodSurface } from "./shared";
 import type { MiniProps } from "./types";
 
 /*
@@ -299,7 +299,7 @@ export function Cipher({ seconds, startedAt, onFinish }: MiniProps) {
       className="relative h-full w-full select-none overflow-hidden bg-[#1a110a]"
       data-game="cipher"
       data-k={kk}
-      data-key={KEY}
+      {...qa({ "data-key": KEY })}
       data-solved={solved ? 1 : 0}
       data-ended={ended ? 1 : 0}
     >

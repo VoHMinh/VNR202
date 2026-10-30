@@ -8,7 +8,7 @@ import { Stamp } from "@/components/kit/Stamp";
 import { Typed } from "@/components/kit/Typed";
 import { cn } from "@/lib/cn";
 import { sfx } from "@/lib/sfx";
-import { GRAIN, isTypingTarget, useBox, useFinishOnce } from "./shared";
+import { GRAIN, isTypingTarget, qa, useBox, useFinishOnce } from "./shared";
 import { makeInterrogation, type CoverLine, type Question } from "./interrogate-plan";
 import type { MiniProps } from "./types";
 import { PASS_MINI } from "@/game/scoring";
@@ -222,7 +222,7 @@ export function Interrogate({ seconds, startedAt, onFinish }: MiniProps) {
       data-phase={phase}
       data-q={phase === "memo" ? 0 : qi + 1}
       data-total={total}
-      data-answer={q && phase !== "done" ? q.answer : ""}
+      {...qa({ "data-answer": q && phase !== "done" ? q.answer : "" })}
       data-correct={correct}
       data-score={score}
       data-done={phase === "done" ? 1 : 0}

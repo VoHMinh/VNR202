@@ -47,6 +47,14 @@ export function mulberry32(seed: number) {
   };
 }
 
+/**
+ * Thuộc tính data-* cho kiểm thử tự động, có khi chứa cả đáp án: chỉ gắn vào trang ở bản chạy thử trên máy,
+ * bản đưa lên mạng bỏ hẳn để không ai mở công cụ dành cho nhà phát triển ra xem được.
+ */
+export function qa<T extends Record<string, unknown>>(attrs: T): Partial<T> {
+  return process.env.NODE_ENV === "production" ? {} : attrs;
+}
+
 /** Bỏ qua phím khi người chơi đang gõ chữ hoặc đang đứng ở một nút bấm khác. */
 export function isTypingTarget(t: EventTarget | null) {
   const el = t as HTMLElement | null;

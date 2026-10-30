@@ -6,31 +6,24 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CHAPTERS, MISSIONS, PLAY_TIME } from "@/game/story";
 import { Btn } from "@/components/kit/Btn";
-import { PartyFlag } from "@/components/kit/PartyFlag";
-import { Photo } from "@/components/kit/Photo";
 import { SheetModal } from "@/components/kit/Sheet";
 import { Stamp } from "@/components/kit/Stamp";
 import { Typed } from "@/components/kit/Typed";
 import { Rules } from "@/components/play/Rules";
+import { LineBoard } from "./LineBoard";
 
-/** Màn hình tiêu đề: bìa hồ sơ mật trên mặt bàn, cờ Đảng, ảnh tư liệu và bốn lối vào. */
+/** Màn hình tiêu đề: bìa hồ sơ mật trên mặt bàn, bốn lối vào và bảng ghim bốn chương của đường dây. */
 export default function Landing() {
   const router = useRouter();
   const [rules, setRules] = useState(false);
 
   return (
     <main className="desk relative flex h-dvh flex-col overflow-hidden text-cream">
-      {/* Đồ vật trên bàn (màn hình rộng) */}
-      <div className="pointer-events-none absolute inset-0 hidden lg:block">
-        <motion.div initial={{ opacity: 0, y: 30, rotate: 8 }} animate={{ opacity: 1, y: 0, rotate: 5 }} transition={{ delay: 0.5, duration: 0.8 }} className="absolute right-[6%] top-[46%] h-[34vh] w-[26vh]">
-          <Photo id="tran-phu" className="h-full w-full" rotate={0} camera={null} sizes="240px" />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: 30, rotate: -10 }} animate={{ opacity: 1, y: 0, rotate: -7 }} transition={{ delay: 0.7, duration: 0.8 }} className="absolute bottom-[7%] right-[24%] h-[26vh] w-[38vh]">
-          <Photo id="con-dao-1895" className="h-full w-full" rotate={0} camera={null} sizes="360px" />
-        </motion.div>
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.9 }} className="absolute right-[8%] top-[5%]">
-          <PartyFlag width={300} />
-        </motion.div>
+      {/* Màn hình rộng: bảng ghim bốn chương nối bằng sợi chỉ đỏ, đặt bên phải bìa hồ sơ */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 hidden lg:block" style={{ left: "calc(6vw + 690px)" }}>
+        <div className="absolute inset-x-[5%] bottom-[7%] top-[5%]">
+          <LineBoard />
+        </div>
       </div>
 
       <div className="relative z-10 flex min-h-0 flex-1 items-center px-3 py-3 sm:px-8 lg:px-[6%]">
@@ -49,7 +42,10 @@ export default function Landing() {
                 Tối mật
               </Stamp>
             </div>
-            <h1 className="inked mt-1 font-head text-[clamp(2.7rem,12vw,7.4rem)] font-bold uppercase leading-[0.98] tracking-[0.02em] text-ink sm:mt-2">Mạch Ngầm</h1>
+            {/* Hai dòng tách riêng, chừa khoảng cho dấu chấm dưới chữ Ạ và dấu mũ, dấu huyền trên chữ Ầ khỏi chạm nhau. */}
+            <h1 className="inked mt-1 font-head text-[clamp(2.6rem,11.5vw,7rem)] font-bold uppercase leading-[0.98] tracking-[0.02em] text-ink sm:mt-2">
+              <span className="block">Mạch</span> <span className="mt-[0.26em] block">Ngầm</span>
+            </h1>
             <div className="mt-2 flex items-center gap-3">
               <span className="h-[3px] w-10 bg-party" />
               <span className="font-head text-[13px] font-semibold uppercase tracking-[0.2em] text-party sm:text-[17px]">Trò chơi lịch sử Đảng</span>

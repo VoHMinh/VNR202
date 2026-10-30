@@ -28,6 +28,11 @@ export function FinalScreen() {
   const title = titleFor(t.total);
   const { room } = useRoom(session.room, 4000);
   const me = room?.players.find((p) => p.id === session.playerId);
+  // Kết quả nhiệm vụ cuối bị mất vì mạng chập chờn: gửi bù để bảng xếp hạng của lớp đủ điểm.
+  const behind = !!me && me.done < answers.length;
+  useEffect(() => {
+    if (behind) useStory.getState().resync();
+  }, [behind, me?.done]);
   const [poster, setPoster] = useState(false);
 
   useEffect(() => {

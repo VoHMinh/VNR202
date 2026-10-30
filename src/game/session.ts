@@ -46,6 +46,8 @@ interface State {
   afterBoard: () => void;
   afterFinale: () => void;
   setRank: (r: RankInfo | null) => void;
+  /** Gửi lại toàn bộ kết quả khi server ghi nhận thiếu (mạng chập chờn). */
+  resync: () => void;
   endByHost: (msg: string) => void;
   restart: () => void;
 }
@@ -55,14 +57,17 @@ export const newId = () => (typeof crypto !== "undefined" && "randomUUID" in cry
 
 const fresh = { phase: "prologue" as Phase, step: 0, index: 0, answers: [] as Answer[], taskStartedAt: null, rank: null, notice: null };
 
-/** Gửi kết quả lên server (phòng lớp). Thử lại vài lần nếu mạng chập chờn. */
-async function sendAnswer(room: string, playerId: string, answer: Answer, onRank: (r: RankInfo) => void, onEnded: (msg: string) => void) {
+/**
+ * Gửi kết quả lên server (phòng lớp): luôn gửi toàn bộ các nhiệm vụ đã làm, server chỉ ghi phần còn thiếu,
+ * nên lần nộp nào bị mất vì mạng chập chờn sẽ được bù ở lần sau. Thử lại vài lần nếu lỗi mạng.
+ */
+async function sendAnswers(room: string, playerId: string, answers: Answer[], onRank: (r: RankInfo) => void, onEnded: (msg: string) => void) {
   for (let i = 0; i < 4; i++) {
     try {
       const res = await fetch(`/api/rooms/${encodeURIComponent(room)}/answer`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ playerId, answer }),
+        body: JSON.stringify({ playerId, answers }),
       });
       const data = await res.json();
       if (res.status === 409) return onEnded(data.error ?? "Trận đã kết thúc");
@@ -74,6 +79,19 @@ async function sendAnswer(room: string, playerId: string, answer: Answer, onRank
       // mạng lỗi: thử lại
     }
     await new Promise((r) => setTimeout(r, 800 * (i + 1)));
+  }
+}
+
+/** Báo server mốc bắt đầu nhiệm vụ (server tự đo thời gian làm bài, không tin con số máy gửi lên). Thử lại vài lần. */
+async function sendBegin(room: string, playerId: string, missionId: string) {
+  for (let i = 0; i < 3; i++) {
+    const res = await fetch(`/api/rooms/${encodeURIComponent(room)}/begin`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ playerId, missionId }),
+    }).catch(() => null);
+    if (res && res.status < 500) return;
+    await new Promise((r) => setTimeout(r, 700 * (i + 1)));
   }
 }
 
@@ -101,7 +119,11 @@ export const useStory = create<State>()(
 
       prepareTask: () => set({ phase: "ready" }),
 
-      startTask: () => set({ phase: "task", taskStartedAt: Date.now() }),
+      startTask: () => {
+        set({ phase: "task", taskStartedAt: Date.now() });
+        const { session, index } = get();
+        if (session.room) void sendBegin(session.room, session.playerId, MISSIONS[index].id);
+      },
 
       submit: (a) => {
         const st = get();
@@ -110,9 +132,10 @@ export const useStory = create<State>()(
         const answer: Answer = { missionId: m.id, ...a };
         const prevStreak = tally(st.answers).streak;
         const scored = scoreAnswer(m, answer, prevStreak);
-        set({ answers: [...st.answers, answer], phase: "result", taskStartedAt: null });
+        const answers = [...st.answers, answer];
+        set({ answers, phase: "result", taskStartedAt: null });
         const { room, playerId } = st.session;
-        if (room) void sendAnswer(room, playerId, answer, (r) => get().setRank(r), (msg) => get().endByHost(msg));
+        if (room) void sendAnswers(room, playerId, answers, (r) => get().setRank(r), (msg) => get().endByHost(msg));
         return scored;
       },
 
@@ -131,6 +154,11 @@ export const useStory = create<State>()(
       afterFinale: () => set({ phase: "done" }),
 
       setRank: (rank) => set({ rank }),
+
+      resync: () => {
+        const { session, answers } = get();
+        if (session.room && answers.length) void sendAnswers(session.room, session.playerId, answers, (r) => get().setRank(r), (msg) => get().endByHost(msg));
+      },
 
       endByHost: (msg) => set({ notice: msg, phase: "done" }),
 

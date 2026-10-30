@@ -24,12 +24,151 @@ export const SORT_CARDS: { text: string; board: SortBoard }[] = [
   { text: "Giữ vững trật tự trị an, chống trộm cắp", board: "Văn hóa – xã hội" },
 ];
 
-/* ───────────── Nhiệm vụ 7 · Kẻ chỉ điểm (suy luận theo nguyên tắc đơn tuyến) — hư cấu ───────────── */
+/* ───────────── Nhiệm vụ 7 · Kẻ chỉ điểm (lời khai mâu thuẫn với vật chứng) — các vụ đều hư cấu ───────────── */
 
-/** Bí danh của các giao liên bị nghi (hư cấu). */
-export const SPY_ALIASES = ["Anh Cả", "Chị Hai", "Chú Ba", "Cô Tư", "Bác Năm", "Cậu Sáu", "Ông Đồ"];
-/** Tên vỏ bọc của các cơ sở (hư cấu, dùng chung với trò Đêm vây ráp). */
-export const SPY_BASES = ["Hiệu may", "Hiệu thuốc bắc", "Nhà trọ", "Hiệu sách", "Quán nước", "Hiệu ảnh", "Xưởng mộc", "Hiệu giặt"];
+export type SpyEvidenceKind = "ticket" | "witness" | "paper" | "letter";
+
+/**
+ * Một vụ: biên bản, manh mối về lúc kẻ chỉ điểm liên lạc với mật thám, lời khai của 4 người bị nghi (bí danh hư cấu)
+ * và 4 vật chứng. Đúng một lời khai che giấu chuyện tối hôm đó bị một vật chứng bác bỏ: người đó là kẻ chỉ điểm.
+ * Vụ khó có thêm một lời nói dối chuyện vặt (`decoy`): có mâu thuẫn nhưng không che giấu gì về lúc liên lạc với mật thám.
+ * `about`: vật chứng nói về người bị nghi nào (-1: không riêng ai).
+ */
+export interface SpyCaseFile {
+  title: string;
+  report: string;
+  lead: string;
+  suspects: { alias: string; says: string }[];
+  evidence: { kind: SpyEvidenceKind; text: string; about: number }[];
+  answer: [number, number];
+  decoy?: [number, number, string];
+  reveal: string;
+}
+
+/** Vụ thứ nhất (dễ): một lời nói dối, bác bỏ bằng một vật chứng. */
+export const SPY_EASY: SpyCaseFile[] = [
+  {
+    title: "Hiệu may phố Hàng Bông",
+    report: "Tối 12/2/1931, mật thám ập vào hiệu may phố Hàng Bông, đi thẳng ra cửa sau, nơi giấu truyền đơn.",
+    lead: "Gần 9 giờ tối hôm đó, một cơ sở thấy có người đứng nói chuyện với mật thám ở Bờ Hồ, trời tối không rõ mặt.",
+    suspects: [
+      { alias: "Anh Cả", says: "Tối 12, tôi ở nhà trọ Hàng Bạc, đi ngủ từ 8 giờ." },
+      { alias: "Chị Hai", says: "Tối đó tôi ngồi quán nước đầu phố Hàng Đào tới gần 10 giờ." },
+      { alias: "Chú Ba", says: "Tôi chỉ giao hàng ở cửa trước, không biết lối ra cửa sau." },
+      { alias: "Cô Tư", says: "Tôi về quê Hà Đông từ hôm 10, hôm 13 mới lên." },
+    ],
+    evidence: [
+      { kind: "ticket", text: "Vé xe điện lên ở Bờ Hồ, bấm lỗ 8 giờ 40 tối 12/2, tìm thấy trong túi áo Anh Cả.", about: 0 },
+      { kind: "witness", text: "Bà chủ quán nước Hàng Đào: Chị Hai ngồi quán tôi tới gần 10 giờ, uống hết ba ấm chè.", about: 1 },
+      { kind: "ticket", text: "Vé xe điện Hà Đông – Hà Nội ngày 13/2, trong ví Cô Tư.", about: 3 },
+      { kind: "witness", text: "Chủ hiệu may: Chú Ba chỉ đứng giao hàng ở cửa trước, chưa vào trong nhà bao giờ.", about: 2 },
+    ],
+    answer: [0, 0],
+    reveal: "Anh Cả khai đi ngủ từ 8 giờ, nhưng vé xe điện lên ở Bờ Hồ lúc 8 giờ 40 lại nằm trong túi áo anh ta, đúng lúc có người gặp mật thám ở Bờ Hồ.",
+  },
+  {
+    title: "Nhà in ở Ô Chợ Dừa",
+    report: "Đêm 20/2/1931, mật thám vây nhà in truyền đơn ở Ô Chợ Dừa đúng giờ đổi ca in, chuyện chỉ người trong tổ biết.",
+    lead: "Khoảng 3 giờ chiều 20/2, người gác chợ thấy một người mặc áo the đen đi vào Sở Mật thám.",
+    suspects: [
+      { alias: "Bác Năm", says: "Chiều 20, tôi ngồi chờ cắt tóc ở phố Hàng Bè tới chạng vạng." },
+      { alias: "Cậu Sáu", says: "Chiều hôm ấy tôi ra phố Hàng Gai cầm đồ lấy tiền mua giấy." },
+      { alias: "Ông Đồ", says: "Cả buổi chiều tôi ngồi viết câu đối thuê ở chợ Đồng Xuân." },
+      { alias: "Cô Tư", says: "Cả chiều tôi ở nhà trông em, không đi đâu." },
+    ],
+    evidence: [
+      { kind: "paper", text: "Biên nhận hiệu cầm đồ Hàng Gai: Cậu Sáu cầm chiếc đồng hồ quả quýt lúc 3 giờ chiều 20/2.", about: 1 },
+      { kind: "witness", text: "Người bán mực ở chợ Đồng Xuân: chiều 20, ông Đồ bày hàng rồi bỏ đi từ 2 giờ, tối mới quay lại.", about: 2 },
+      { kind: "witness", text: "Bà hàng xóm: chiều 20, Cô Tư bế em ra đầu ngõ chơi suốt.", about: 3 },
+      { kind: "witness", text: "Thợ cắt tóc Hàng Bè: Bác Năm ngồi đánh cờ chờ tới lượt, chạng vạng mới về.", about: 0 },
+    ],
+    answer: [2, 1],
+    reveal: "Ông Đồ khai ngồi viết câu đối cả chiều, nhưng người bán mực thấy ông bỏ hàng đi từ 2 giờ, đúng lúc có người mặc áo the đen vào Sở Mật thám.",
+  },
+  {
+    title: "Hộp thư ở bến Phà Đen",
+    report: "Sáng 2/3/1931, mật thám rình ở hộp thư bí mật dưới gốc gạo bến Phà Đen. Chỉ người chuyển thư tuần này biết chỗ đó.",
+    lead: "Khoảng 7 giờ tối 1/3, ông lái đò thấy một người đứng nói chuyện với mật thám ở bến.",
+    suspects: [
+      { alias: "Chị Hai", says: "Tối 1/3, tôi đi xem hát chèo từ 6 giờ tới 9 giờ." },
+      { alias: "Anh Cả", says: "Chập tối hôm ấy tôi ra chợ Mơ mua gạo rồi về nhà." },
+      { alias: "Chú Ba", says: "Tối đó tôi trực ca ở xưởng mộc, cả xưởng đều thấy." },
+      { alias: "Cậu Sáu", says: "Tuần này tôi không được giao chuyển thư." },
+    ],
+    evidence: [
+      { kind: "witness", text: "Người soát vé rạp hát: Chị Hai ngồi hàng ghế đầu cả buổi, vỗ tay to nhất rạp.", about: 0 },
+      { kind: "paper", text: "Sổ chấm công xưởng mộc: tối 1/3, Chú Ba nghỉ ca, ghi là ốm.", about: 2 },
+      { kind: "paper", text: "Phiếu giao việc tuần này: Chị Hai, Anh Cả, Chú Ba chuyển thư.", about: -1 },
+      { kind: "witness", text: "Bà bán gạo chợ Mơ: Anh Cả mua 5 cân gạo, ngồi mặc cả tới gần 8 giờ mới đi.", about: 1 },
+    ],
+    answer: [2, 1],
+    reveal: "Chú Ba khai trực ca ở xưởng mộc, nhưng sổ chấm công ghi tối đó anh ta nghỉ ốm. Anh ta nói dối về đúng lúc có người gặp mật thám ở bến Phà Đen.",
+  },
+];
+
+/** Vụ thứ hai (khó): phải xét cả ai biết bí mật, và có một lời nói dối chuyện vặt để đánh lạc hướng. */
+export const SPY_HARD: SpyCaseFile[] = [
+  {
+    title: "Cuộc họp ở hiệu thuốc bắc",
+    report: "Tối 25/2/1931, mật thám ập vào hiệu thuốc bắc phố Hàng Buồm đúng giờ chi bộ họp. Giờ họp vừa đổi sang 7 giờ tối, chỉ báo miệng cho Cậu Sáu, Chị Hai và Bác Năm.",
+    lead: "Khoảng 5 giờ chiều 25/2, có người thấy kẻ chỉ điểm vào bưu điện Bờ Hồ gọi dây nói.",
+    suspects: [
+      { alias: "Cậu Sáu", says: "Chiều 25, tôi khuân hàng ở ga Hàng Cỏ từ trưa tới tối mịt." },
+      { alias: "Chị Hai", says: "Cả chiều tôi ngồi khâu áo ở nhà, không ra phố." },
+      { alias: "Bác Năm", says: "Chiều đó tôi ra Bờ Hồ uống nước chè. Tôi bỏ thuốc lào từ Tết rồi." },
+      { alias: "Cô Tư", says: "Chiều 25, tôi vào bưu điện Bờ Hồ gửi thư về quê." },
+    ],
+    evidence: [
+      { kind: "letter", text: "Thư Cô Tư gửi về quê, đóng dấu bưu điện Bờ Hồ lúc 4 giờ 50 chiều 25/2.", about: 3 },
+      { kind: "witness", text: "Cai phu ga Hàng Cỏ: hôm 25, Cậu Sáu bỏ việc từ 3 giờ chiều, không lĩnh công.", about: 0 },
+      { kind: "witness", text: "Bà hàng xóm: chiều 25, Chị Hai ngồi khâu áo ở hiên nhà chị ấy tới tối.", about: 1 },
+      { kind: "witness", text: "Ông bán chè Bờ Hồ: Bác Năm ngồi hàng tôi từ 4 giờ tới gần 6 giờ, không rời ghế, hút liền ba điếu thuốc lào.", about: 2 },
+    ],
+    answer: [0, 1],
+    decoy: [2, 3, "Bác Năm nói dối chuyện bỏ thuốc lào, nhưng ông bán chè xác nhận bác ngồi suốt ở hàng chè, không vào bưu điện."],
+    reveal: "Cậu Sáu biết giờ họp mới, khai khuân hàng tới tối nhưng thực ra bỏ việc từ 3 giờ chiều, đủ thì giờ ra bưu điện gọi dây nói. Cô Tư có vào bưu điện thật, nhưng không được báo giờ họp mới.",
+  },
+  {
+    title: "Kho truyền đơn ở xưởng mộc",
+    report: "Sáng 5/3/1931, mật thám khám xưởng mộc phố Hàng Gai, cạy đúng tấm ván sàn giấu truyền đơn. Chỉ người từng xuống cất truyền đơn mới biết tấm ván nào.",
+    lead: "Khoảng 8 giờ tối 4/3, có người thấy một người đạp xe đạp tới cổng Sở Mật thám.",
+    suspects: [
+      { alias: "Bác Năm", says: "Tối 4/3, tôi sang làng Bưởi thăm em gái, ngủ lại bên đó." },
+      { alias: "Cậu Sáu", says: "Tôi không có xe đạp. Tối đó tôi ở nhà trọ." },
+      { alias: "Ông Đồ", says: "Tối 4/3, tôi ngồi viết thư thuê ở chợ Đồng Xuân tới 9 giờ." },
+      { alias: "Chị Hai", says: "Tôi chưa xuống chỗ cất truyền đơn ở xưởng mộc bao giờ." },
+    ],
+    evidence: [
+      { kind: "witness", text: "Em gái Bác Năm ở làng Bưởi: tối 4/3 bác có sang, ăn vội bát cơm rồi đạp xe đi ngay, bảo có việc gấp trên phố.", about: 0 },
+      { kind: "paper", text: "Sổ khách nhà trọ: Cậu Sáu về phòng 7 giờ tối 4/3, sáng mới ra. Chủ trọ kể cậu ta có xe đạp, dựng ở gầm cầu thang.", about: 1 },
+      { kind: "witness", text: "Bác bán nước chợ Đồng Xuân: tối 4/3, ông Đồ viết thư cho một bà cụ, bà khóc mãi, 9 giờ mới xong.", about: 2 },
+      { kind: "paper", text: "Sổ phân công cất truyền đơn: Bác Năm, Cậu Sáu, Ông Đồ.", about: -1 },
+    ],
+    answer: [0, 0],
+    decoy: [1, 1, "Cậu Sáu nói dối chuyện không có xe đạp, nhưng sổ nhà trọ ghi tối đó cậu ta ở trong phòng từ 7 giờ."],
+    reveal: "Bác Năm biết chỗ giấu truyền đơn, khai ngủ lại làng Bưởi, nhưng em gái kể bác ăn vội rồi đạp xe đi ngay, đúng lúc có người đạp xe tới Sở Mật thám.",
+  },
+  {
+    title: "Lá thư không ký tên",
+    report: "Ngày 10/3/1931, Sở Mật thám nhận một lá thư không ký tên, chỉ chỗ họp tổ ở ga Hàng Cỏ. Thư viết mực tím, chữ nghiêng hẳn sang trái.",
+    lead: "Một cơ sở làm thông ngôn ở Sở Mật thám cho biết: thư được bỏ vào thùng thư phố Hàng Đào sáng 9/3.",
+    suspects: [
+      { alias: "Anh Cả", says: "Tôi viết chữ đứng. Nhà tôi chỉ có mực đen." },
+      { alias: "Chị Hai", says: "Sáng 9/3, tôi ra chợ Hàng Đào mua vải rồi về ngay." },
+      { alias: "Bác Năm", says: "Tôi không biết chữ, thư từ đều nhờ người viết hộ." },
+      { alias: "Cô Tư", says: "Tôi viết tay trái, nhưng sáng 9/3 tôi ở nhà dạy em học." },
+    ],
+    evidence: [
+      { kind: "paper", text: "Sổ ghi chép của Anh Cả: chữ đứng thẳng, viết bằng mực tím.", about: 0 },
+      { kind: "witness", text: "Bà bán vải Hàng Đào: sáng 9/3, Chị Hai mua hai thước vải, trả tiền xu rồi về ngay.", about: 1 },
+      { kind: "witness", text: "Ông đồ viết thuê: Bác Năm hay nhờ tôi viết thư, bác chỉ biết ký tên.", about: 2 },
+      { kind: "witness", text: "Người đưa thư: sáng 9/3, tôi thấy Cô Tư bỏ một lá thư vào thùng thư phố Hàng Đào.", about: 3 },
+    ],
+    answer: [3, 3],
+    decoy: [0, 0, "Anh Cả nói dối chuyện mực tím, nhưng chữ anh ta đứng thẳng, không nghiêng trái như chữ trong thư."],
+    reveal: "Cô Tư viết tay trái, khớp với nét chữ nghiêng trái trong thư. Chị khai ở nhà dạy em học, nhưng người đưa thư thấy chị bỏ thư vào thùng thư Hàng Đào sáng 9/3.",
+  },
+];
 
 /* ───────────── Nhiệm vụ 10 · Hỏi cung (nhớ lý lịch giả) — hư cấu ───────────── */
 
@@ -112,37 +251,72 @@ export const INK_QUESTIONS: { slot: keyof typeof INK_SLOTS; question: string }[]
   { slot: "phrase", question: "Ám hiệu để người liên lạc nhận ra là gì?" },
 ];
 
-/* ───────────── Nhiệm vụ 20 · Gác cửa hội trường (Ma Cao, 3/1935) — ám hiệu, giấy tờ là hư cấu ───────────── */
+/* ───────────── Nhiệm vụ 20 · Gác cửa hội trường (Ma Cao, 3/1935) — tờ báo tín vật là hư cấu ───────────── */
 
 /** Số đại biểu dự Đại hội I (theo giáo trình). */
 export const DELEGATES = 13;
+/** Màn chơi là ca gác cuối: số đại biểu đã vào trước khi ca của người chơi bắt đầu (hư cấu, chỉ để dựng cảnh). */
+export const DELEGATES_BEFORE = 10;
 
 /**
- * Ám hiệu hỏi – đáp của ngày họp (hư cấu; các nguồn chỉ ghi Đại hội họp bí mật tại một địa điểm ở phố Quan Công).
- * Mỗi lượt chơi lấy một cặp. `wrong`: câu đáp gần đúng, mỗi câu chỉ khác câu đúng một chữ.
+ * Tờ báo tín vật (hư cấu hoàn toàn: tên báo, tin, rao vặt). Mỗi đại biểu mang một tờ giống hệt tờ người gác giữ;
+ * tờ báo của người lạ hay tờ làm giả có chỗ khác. Mỗi ô chữ (hoặc hình vẽ) có vài bản khác để làm tờ giả,
+ * `lv`: 1 khác rõ (thường là đổi chữ cho vui), 2 khác số, tên riêng, 3 khác rất nhỏ.
+ * 25/3/1935 đúng là thứ Hai (Đại hội khai mạc thứ Tư 27/3/1935).
  */
-export const DOOR_PASSWORDS: { ask: string; answer: string; wrong: string[] }[] = [
-  { ask: "Ông tìm ai?", answer: "Tôi tìm chú Ba bán chè.", wrong: ["Tôi tìm chú Tư bán chè.", "Tôi tìm chú Ba bán vải.", "Tôi tìm thím Ba bán chè."] },
-  {
-    ask: "Ông đến có việc gì?",
-    answer: "Tôi mang thư của chị Hai ở Hương Cảng.",
-    wrong: ["Tôi mang thư của chị Ba ở Hương Cảng.", "Tôi mang thư của chị Hai ở Quảng Châu.", "Tôi mang quà của chị Hai ở Hương Cảng."],
-  },
-  { ask: "Hàng đã về chưa?", answer: "Hàng về từ mồng bốn, còn hai kiện.", wrong: ["Hàng về từ mồng năm, còn hai kiện.", "Hàng về từ mồng bốn, còn ba kiện.", "Hàng về từ mồng bốn, còn hai thùng."] },
-  { ask: "Ông cần mua gì?", answer: "Hai cân chè Thái, gói giấy đỏ.", wrong: ["Ba cân chè Thái, gói giấy đỏ.", "Hai cân chè Thái, gói giấy vàng.", "Hai cân chè mạn, gói giấy đỏ."] },
-];
-
-/** Người lạ gõ nhầm cửa (hư cấu): không biết ám hiệu, không mang giấy tờ. */
-export interface DoorStranger {
-  kind: "peddler" | "lost" | "lodger" | "mail";
-  line: string;
-  who: string;
+export interface PaperUnit {
+  id: string;
+  text: string;
+  alts: { text: string; lv: 1 | 2 | 3 }[];
 }
-export const DOOR_STRANGERS: DoorStranger[] = [
-  { kind: "peddler", line: "Bánh bao nóng đây! Ông mua giúp vài cái?", who: "Người bán hàng rong gõ nhầm cửa" },
-  { kind: "lost", line: "Xin lỗi, nhà ông thợ may họ Lý có phải ở đây không?", who: "Người hỏi nhầm nhà" },
-  { kind: "lodger", line: "Ở đây có cho thuê phòng trọ không ông?", who: "Người tìm phòng trọ gõ nhầm cửa" },
-  { kind: "mail", line: "Có thư gửi ông Trần, có phải nhà này không?", who: "Người đưa thư nhầm địa chỉ" },
+export type PaperDrawing = "teapot" | "rooster";
+export interface PaperArt {
+  id: PaperDrawing;
+  alts: { variant: string; lv: 1 | 2 | 3; desc: string }[];
+}
+
+const u = (id: string, text: string, ...alts: [string, 1 | 2 | 3][]): PaperUnit => ({ id, text, alts: alts.map(([t, lv]) => ({ text: t, lv })) });
+
+export const PAPER = {
+  dateline: [u("no", "Số 312", ["Số 321", 2]), u("day", "Thứ Hai", ["Thứ Ba", 2]), u("date", "25-3-1935", ["26-3-1935", 2], ["25-3-1953", 3]), u("price", "Giá 3 xu", ["Giá 5 xu", 2])],
+  masthead: u("mast", "TIN VẶT BỐN PHƯƠNG", ["TIN VẶT TÁM PHƯƠNG", 1]),
+  sub: u("sub", "Ra sáng thứ hai hằng tuần", ["Ra chiều thứ hai hằng tuần", 3]),
+  headline: [u("h1", "MÈO NHÀ ÔNG TRẦN", ["CHÓ NHÀ ÔNG TRẦN", 1], ["MÈO NHÀ BÀ TRẦN", 2]), u("h2", "ĐI LẠC BA NGÀY", ["ĐI CHƠI BA NGÀY", 1], ["ĐI LẠC BỐN NGÀY", 2]), u("h3", "ĐÃ VỀ!", ["CHƯA VỀ!", 1], ["ĐÃ VỀ?", 3])],
+  news: [u("n1", "Bà Ba bán xôi", ["Bà Ba bán phở", 1], ["Bà Tư bán xôi", 2]), u("n2", "đầu ngõ", ["cuối ngõ", 3]), u("n3", "hứa từ mai", ["hứa từ mốt", 3]), u("n4", "thêm lạc vào xôi.", ["thêm muối vào xôi.", 1], ["thêm đỗ vào xôi.", 2]), u("n5", "Khách quen mừng lắm.", ["Khách quen lo lắm.", 1])],
+  weather: [u("w1", "Sáng sương mù,", ["Sáng mưa phùn,", 2]), u("w2", "chiều nắng nhẹ.", ["chiều gió nhẹ.", 3])],
+  riddle: [u("q1", "Đầu dê mình ốc", ["Đầu gà mình ốc", 2], ["Đầu dơi mình ốc", 3]), u("q2", "là con gì?", ["là cái gì?", 3]), u("q3", "(Đáp ở số sau)", ["(Đáp ở trang sau)", 3])],
+  ad: [u("a1", "CHÈ TÂN HƯƠNG", ["CHÈ TÂN HƯNG", 2]), u("a2", "thơm ngon, giá hạ", ["thơm ngon, giá cao", 1])],
+  sale: [u("r1", "Cần bán gà trống", ["Cần bán gà mái", 1], ["Cần mua gà trống", 2]), u("r2", "biết gáy đúng giờ,", ["biết gáy sai giờ,", 1], ["biết hát đúng giờ,", 1]), u("r3", "giá 3 hào.", ["giá 5 hào.", 2])],
+  lost: [u("r4", "Ai nhặt được ô đen", ["Ai nhặt được ô xanh", 2]), u("r5", "cán gỗ", ["cán tre", 3]), u("r6", "xin trả hiệu may họ Lý,", ["xin trả hiệu may họ Lê,", 3]), u("r7", "có hậu tạ.", ["có quà tạ.", 3])],
+  page: u("pg", "Trang 1", ["Trang 7", 2]),
+  art: [
+    {
+      id: "teapot",
+      alts: [
+        { variant: "spout", lv: 2, desc: "vòi ấm trà quay sang bên kia" },
+        { variant: "steam", lv: 3, desc: "ấm trà chỉ có hai làn hơi" },
+        { variant: "lid", lv: 3, desc: "nắp ấm trà mất núm" },
+      ],
+    },
+    {
+      id: "rooster",
+      alts: [
+        { variant: "facing", lv: 2, desc: "con gà quay đầu sang bên kia" },
+        { variant: "comb", lv: 2, desc: "con gà không có mào" },
+        { variant: "tail", lv: 3, desc: "đuôi gà chỉ có ba chiếc lông" },
+      ],
+    },
+  ] as PaperArt[],
+};
+
+/** Câu khách nói khi đưa báo qua khe cửa (chọn ngẫu nhiên, không lộ ai là đại biểu). */
+export const DOOR_LINES = [
+  "Báo của tôi đây, mời ông xem.",
+  "Tờ báo hôm nay đây ạ.",
+  "Tôi mang báo tới như đã hẹn.",
+  "Ông xem giúp, báo còn thơm mùi mực.",
+  "Báo đây, tôi giữ kỹ lắm.",
+  "Tờ báo của tôi, ông xem có đúng không.",
 ];
 
 /* ───────────── Thẻ "Cách chơi" hiện trước mỗi trò chơi nhỏ (đồng hồ chỉ chạy khi bấm Bắt đầu) ───────────── */
@@ -187,14 +361,14 @@ export const MINI_GUIDES: Record<MiniGame, MiniGuide> = {
     win: "Có 8 lần báo động; mỗi cơ sở cứu được 125 điểm.",
   },
   spy: {
-    goal: "Tìm ra kẻ chỉ điểm trong 2 vụ liên tiếp.",
+    goal: "Vạch mặt kẻ chỉ điểm qua lời khai mâu thuẫn.",
     steps: [
-      "Xem các cơ sở: **đỏ là bị phá**, **xanh là an toàn**.",
-      "Thẻ của mỗi giao liên ghi **những cơ sở người đó biết**.",
-      "Kẻ chỉ điểm là người biết **đúng và đủ các cơ sở đỏ**: không thiếu cơ sở đỏ nào, không có cơ sở xanh nào.",
+      "Đọc **biên bản**, **manh mối**: kẻ chỉ điểm gặp mật thám **lúc nào, ở đâu**.",
+      "Chọn **một lời khai** và **một vật chứng** bác bỏ nó, bấm **Đối chất**.",
+      "Chỉ lời nói dối về **đúng lúc ấy** mới tính; nói dối **chuyện vặt** thì không.",
     ],
-    win: "Chọn đúng mỗi vụ được 250 đến 500 điểm, càng nhanh càng nhiều.",
-    tip: "Loại ngay người biết cơ sở xanh, rồi loại người còn thiếu cơ sở đỏ.",
+    win: "Vụ 1 tới 450 điểm, vụ 2 tới 550; đối chất sai bị trừ 70.",
+    tip: "Các vụ, bí danh đều hư cấu. Ai không biết bí mật thì không phải kẻ chỉ điểm.",
   },
   sneak: {
     goal: "Đưa chấm đỏ (là bạn) tới Nhà an toàn ở góc trên bên phải.",
@@ -254,13 +428,13 @@ export const MINI_GUIDES: Record<MiniGame, MiniGuide> = {
     tip: "Mỗi người một khóa riêng, không chép được của bạn bên cạnh.",
   },
   door: {
-    goal: "Chỉ mời đúng đại biểu vào nơi họp.",
+    goal: "Chỉ mời vào ai mang tờ báo giống hệt tờ của bạn.",
     steps: [
-      "So câu khách **đáp ám hiệu** với **thẻ ám hiệu**: khác **một chữ** là sai.",
-      "Từ **khách thứ 7**: xem **dấu đỏ hình vuông**. Từ **khách thứ 14**: mảnh giấy phải **khớp mép**.",
-      "Đúng hết: **Mời vào**. Sai một điểm: **Mời ra** (phím **← →**).",
+      "So **tờ báo tín vật** của khách với **tờ gốc**: từng **chữ**, **con số**, **hình vẽ**.",
+      "Thấy **chỗ khác** thì **chạm vào chỗ đó** để mời ra. Chạm nhầm bị **trừ 20**.",
+      "Giống hệt thì bấm **Mời vào**. Điện thoại: bấm **Xem tờ của bạn** để lật.",
     ],
-    win: "Đúng và nhanh: tới 48 điểm mỗi khách; để lọt người không hợp lệ: trừ 71. Từ 500 điểm là hoàn thành.",
-    tip: "Mời nhầm đại biểu ra chỉ mất điểm. Ám hiệu, giấy tờ là hư cấu.",
+    win: "Đúng và nhanh được trọn điểm; để lọt tờ giả bị trừ nặng. Từ 500 điểm là hoàn thành.",
+    tip: "Tờ báo là hư cấu. Đừng bỏ qua ngày tháng, giá tiền và hai hình vẽ.",
   },
 };

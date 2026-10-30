@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { isAutomated } from "@/components/kit/HumanOnly";
 import { Btn } from "@/components/kit/Btn";
 import { Stamp } from "@/components/kit/Stamp";
 
@@ -19,6 +20,7 @@ export function JoinForm({ initialRoom, focusRoom = false, onJoin }: { initialRo
     const n = name.trim().replace(/\s+/g, " ");
     const r = room.trim().toUpperCase();
     if (n.length < 2) return setError("Hãy nhập tên của bạn (ít nhất 2 ký tự).");
+    if (r && process.env.NODE_ENV === "production" && isAutomated()) return setError("Phát hiện trình duyệt tự động (bot). Hãy vào phòng bằng trình duyệt thường trên điện thoại hoặc máy tính.");
     if (r) {
       setBusy(true);
       const res = await fetch(`/api/rooms/${encodeURIComponent(r)}`).catch(() => null);

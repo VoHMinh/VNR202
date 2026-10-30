@@ -1,8 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { BookOpen, ChevronDown, ChevronRight, Lightbulb, Play, Target, Timer, Trophy } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { BookOpen, ChevronDown, ChevronRight, EyeOff, Lightbulb, Play, Target, Timer, Trophy } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MISSIONS, TOTAL, isChapterEnd, withName, type DecisionMission, type Mission, type MiniMission } from "@/game/story";
 import { tally } from "@/game/scoring";
 import { useStory } from "@/game/session";
@@ -123,13 +123,15 @@ function DecisionTask({ m }: { m: DecisionMission }) {
   const options = useMemo(() => seededShuffle(m.options, `${playerId || name}:${m.id}`), [m, playerId, name]);
   const submit = useStory((s) => s.submit);
   const [picked, setPicked] = useState<string | null>(null);
+  const [away, awayShown] = useAway();
   const choose = (id: string | undefined) => {
     if (picked) return;
     setPicked(id ?? "-");
-    submit({ choice: id, ms: Date.now() - startedAt });
+    submit({ choice: id, ms: Date.now() - startedAt, away: away.current });
   };
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex min-h-0 flex-1 flex-col pt-3">
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="relative flex min-h-0 flex-1 select-none flex-col pt-3" onCopy={noCopy} onCut={noCopy} onContextMenu={noCopy}>
+      <AwayNotice n={awayShown} />
       <div className="flex items-start gap-3">
         <p className="min-w-0 flex-1 font-text text-[17px] font-semibold leading-snug text-ink sm:text-[20px]">{withName(m.prompt, name)}</p>
         <Stopwatch seconds={m.time} startedAt={startedAt} onExpire={() => choose(undefined)} size={58} />
@@ -156,6 +158,57 @@ function DecisionTask({ m }: { m: DecisionMission }) {
           </motion.button>
         ))}
       </div>
+    </motion.div>
+  );
+}
+
+/** Không cho sao chép, cắt, mở menu chuột phải ở màn làm nhiệm vụ (khó dán câu hỏi sang công cụ khác). */
+const noCopy = (e: React.SyntheticEvent) => e.preventDefault();
+
+/**
+ * Đếm số lần rời màn hình trò chơi (chuyển tab, chuyển ứng dụng) trong lúc làm nhiệm vụ.
+ * Con số được gửi kèm kết quả; ở phòng lớp, màn chiếu của chủ phòng sẽ thấy.
+ */
+function useAway() {
+  const count = useRef(0);
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    let away = false;
+    const leave = () => {
+      if (away) return;
+      away = true;
+      count.current += 1;
+    };
+    const back = () => {
+      if (!away) return;
+      away = false;
+      setShown(count.current);
+    };
+    const onVis = () => (document.visibilityState === "hidden" ? leave() : back());
+    window.addEventListener("blur", leave);
+    window.addEventListener("focus", back);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("blur", leave);
+      window.removeEventListener("focus", back);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
+  return [count, shown] as const;
+}
+
+/** Nhắc người chơi (phòng lớp) khi vừa quay lại sau khi rời màn hình trò chơi. */
+function AwayNotice({ n }: { n: number }) {
+  const room = useStory((s) => s.session.room);
+  if (!room || n === 0) return null;
+  return (
+    <motion.div
+      key={n}
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="pointer-events-none absolute inset-x-2 top-1 z-20 flex items-center gap-2 rounded-[3px] bg-[#1f1a14]/90 px-2.5 py-1.5 font-text text-[12.5px] leading-snug text-[#ffd77a] shadow-[0_6px_14px_rgba(0,0,0,0.5)] sm:text-[13.5px]"
+    >
+      <EyeOff className="h-4 w-4 shrink-0" /> Bạn đã rời màn hình trò chơi {n} lần trong nhiệm vụ này. Màn chiếu của chủ phòng sẽ thấy số lần này.
     </motion.div>
   );
 }
@@ -227,13 +280,15 @@ function MiniTask({ m }: { m: MiniMission }) {
   const startedAt = useTaskStart();
   const submit = useStory((s) => s.submit);
   const [over, setOver] = useState(false);
+  const [away, awayShown] = useAway();
   const finish = (score: number) => {
     if (over) return;
     setOver(true);
-    submit({ mini: score, ms: Date.now() - startedAt });
+    submit({ mini: score, ms: Date.now() - startedAt, away: away.current });
   };
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={cn("flex min-h-0 flex-1 flex-col", m.wide ? "pt-0" : "pt-2.5")}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={cn("relative flex min-h-0 flex-1 select-none flex-col", m.wide ? "pt-0" : "pt-2.5")} onCopy={noCopy} onCut={noCopy} onContextMenu={noCopy}>
+      <AwayNotice n={awayShown} />
       <div className="flex items-center gap-3">
         {m.wide && <span className="hidden shrink-0 font-head text-[20px] font-bold uppercase tracking-wide text-ink sm:inline">{m.title}</span>}
         <p

@@ -1,7 +1,8 @@
-import { cleanName, normalizeCode, publicRoom, store } from "@/server/rooms";
+import { BOT_ERROR, cleanName, looksLikeBot, normalizeCode, publicRoom, store } from "@/server/rooms";
 
 /** Vào phòng (hoặc vào lại sau khi tải lại trang). Được vào cả khi trận đã bắt đầu. */
 export async function POST(request: Request, ctx: RouteContext<"/api/rooms/[code]/join">) {
+  if (looksLikeBot(request.headers.get("user-agent"))) return Response.json({ error: BOT_ERROR }, { status: 403 });
   const code = normalizeCode((await ctx.params).code);
   const room = await store.getRoom(code);
   if (!room) return Response.json({ error: "Không tìm thấy phòng" }, { status: 404 });

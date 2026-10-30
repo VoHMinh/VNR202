@@ -5,7 +5,7 @@
 import "server-only";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { MISSIONS, TOTAL } from "@/game/story";
+import { MISSIONS, TOTAL, type MiniGame } from "@/game/story";
 import { tally, type Answer } from "@/game/scoring";
 
 export const ROOM_TTL_SECONDS = 24 * 60 * 60;
@@ -30,6 +30,8 @@ export interface PlayerDoc {
   lastSeen: number;
   answers: Answer[];
   finishedAt?: number;
+  /** Mốc server ghi khi người chơi bấm bắt đầu từng nhiệm vụ (mã nhiệm vụ → thời điểm). */
+  began?: Record<string, number>;
 }
 
 /** Thông tin công khai của một người chơi trên bảng xếp hạng. */
@@ -42,6 +44,10 @@ export interface PublicPlayer {
   streak: number;
   finished: boolean;
   rank: number;
+  /** Tổng số lần rời màn hình trò chơi trong lúc làm nhiệm vụ. */
+  away: number;
+  /** Số nhiệm vụ nộp nhanh bất thường hoặc không đối chiếu được thời gian. */
+  flags: number;
 }
 
 export interface PublicRoom {
@@ -72,6 +78,34 @@ function randomCode(len = 4) {
 export function normalizeCode(code: string) {
   return code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
 }
+
+/**
+ * Thời gian tối thiểu (mili giây) để làm xong từng trò chơi nhỏ một cách thật sự, đặt thấp hơn hẳn người chơi nhanh nhất:
+ * nộp sớm hơn mức này là bất thường (gửi điểm bằng lệnh, nhờ bot), điểm bị giảm theo tỉ lệ thời gian.
+ */
+export const MIN_MS: Record<MiniGame, number> = {
+  print: 14000,
+  sort: 8000,
+  protect: 14000,
+  spy: 9000,
+  sneak: 4000,
+  interrogate: 12000,
+  timeline: 6000,
+  network: 5000,
+  ink: 8000,
+  cipher: 3500,
+  door: 18000,
+};
+/** Điểm trò chơi nhỏ tối đa khi không có mốc bắt đầu để đối chiếu thời gian. */
+export const UNVERIFIED_MINI_CAP = 700;
+
+/** Yêu cầu không đến từ trình duyệt của người thật: chương trình gọi thẳng (curl, Node, Python…) hoặc trình duyệt không giao diện. */
+export function looksLikeBot(userAgent: string | null) {
+  if (process.env.NODE_ENV !== "production") return false;
+  const ua = userAgent ?? "";
+  return !ua || /HeadlessChrome|PhantomJS|curl\/|python-requests|python-urllib|aiohttp|node-fetch|undici|axios|Go-http-client|okhttp|Java\/|wget|httpie|postman/i.test(ua);
+}
+export const BOT_ERROR = "Phát hiện yêu cầu tự động (bot). Hãy chơi bằng trình duyệt thường trên điện thoại hoặc máy tính.";
 
 export function cleanName(name: unknown) {
   return String(name ?? "")
@@ -257,6 +291,8 @@ export function rankPlayers(players: PlayerDoc[]): PublicPlayer[] {
     streak: t.streak,
     finished: t.done >= TOTAL,
     rank: i + 1,
+    away: p.answers.reduce((s, a) => s + (a.away ?? 0), 0),
+    flags: p.answers.filter((a) => a.flag === "fast" || a.flag === "unverified").length,
   }));
 }
 

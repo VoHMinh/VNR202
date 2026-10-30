@@ -5,7 +5,7 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Stamp } from "@/components/kit/Stamp";
 import { SORT_BOARDS, SORT_CARDS } from "@/game/data/minis";
 import { sfx } from "@/lib/sfx";
-import { isTypingTarget, mulberry32, useBox, useFinishOnce } from "./shared";
+import { isTypingTarget, mulberry32, qa, useBox, useFinishOnce } from "./shared";
 import { Bench, Board, DinhWall, Pile, SheetFace, Tack, type BoardLay, type Rect } from "./sort-scene";
 import type { MiniProps } from "./types";
 
@@ -394,8 +394,8 @@ export function Sort({ seconds, startedAt, onFinish }: MiniProps) {
       data-total={TOTAL}
       data-mistakes={missed}
       data-card={cur}
-      data-answer={cur >= 0 ? BOARD_OF[cur] : ""}
-      data-answer-name={cur >= 0 ? SORT_CARDS[cur].board : ""}
+      {...qa({ "data-answer": cur >= 0 ? BOARD_OF[cur] : "" })}
+      {...qa({ "data-answer-name": cur >= 0 ? SORT_CARDS[cur].board : "" })}
     >
       {box.w > 0 && (
         <>

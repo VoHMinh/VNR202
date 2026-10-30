@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Cousine, Literata, Oswald } from "next/font/google";
+import { HumanOnly } from "@/components/kit/HumanOnly";
 import "./globals.css";
 
 /* Ba phông chữ đều có bộ dấu tiếng Việt:
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="vi" className={`${head.variable} ${type.variable} ${text.variable} h-full antialiased`}>
       <body className="min-h-full">
+        <HumanOnly />
         {/* Bộ lọc SVG dùng chung cho dấu mộc: mép sần và mực in không đều. */}
         <svg aria-hidden width="0" height="0" className="absolute">
           <filter id="rough-ink" x="-5%" y="-5%" width="110%" height="110%">

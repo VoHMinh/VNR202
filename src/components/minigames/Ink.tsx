@@ -7,7 +7,7 @@ import { Stamp } from "@/components/kit/Stamp";
 import { INK_COVER, INK_HIDDEN, INK_QUESTIONS, INK_SLOTS } from "@/game/data/minis";
 import { cn } from "@/lib/cn";
 import { sfx } from "@/lib/sfx";
-import { GRAIN, WoodSurface, mulberry32, useBox, useFinishOnce } from "./shared";
+import { GRAIN, mulberry32, qa, useBox, useFinishOnce, WoodSurface } from "./shared";
 import type { MiniProps } from "./types";
 
 /*
@@ -529,7 +529,7 @@ export function Ink({ seconds, startedAt, onFinish }: MiniProps) {
       data-phase={phase}
       data-revealed={view.revealed.toFixed(2)}
       data-burns={view.burns}
-      data-answer={asking ? letter.answer : undefined}
+      {...qa({ "data-answer": asking ? letter.answer : undefined })}
       data-picked={picked ?? undefined}
       data-ready={text ? 1 : 0}
     >

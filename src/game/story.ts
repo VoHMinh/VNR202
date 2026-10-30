@@ -353,19 +353,20 @@ export const MISSIONS: Mission[] = [
     id: "m7",
     kind: "mini",
     game: "spy",
+    wide: true,
     chapter: 2,
     date: "Đầu năm 1931",
     place: "Hà Nội",
     title: "Kẻ chỉ điểm",
     art: "hanoi-map-1929",
     brief: [
-      "Sau đêm vây ráp, chi bộ nhận ra mật thám đã ập vào đúng những cơ sở mà một người nắm được. Trong hàng ngũ có kẻ chỉ điểm.",
-      "Theo nguyên tắc đơn tuyến, mỗi giao liên chỉ biết vài cơ sở. {ten} phải đối chiếu thật nhanh để cắt liên lạc với kẻ phản bội trước khi hắn kịp báo thêm.",
+      "Sau đêm vây ráp, chi bộ nhận ra mật thám biết những chuyện chỉ người trong tổ mới biết. Trong hàng ngũ có kẻ chỉ điểm.",
+      "{ten} được giao xem lại hồ sơ hai vụ: biên bản, lời khai của từng người và các vật chứng. Ai nói dối về đúng lúc liên lạc với mật thám, người đó là kẻ phản bội.",
     ],
-    howto: "Cơ sở đỏ là bị phá, xanh là an toàn. Kẻ chỉ điểm là người biết đúng và đủ các cơ sở bị phá. Chạm vào người đó. Có hai vụ liên tiếp.",
-    win: "Kẻ chỉ điểm bị cô lập. Các cơ sở còn lại kịp đổi địa điểm.",
-    lose: "Chậm phát hiện, kẻ chỉ điểm tiếp tục báo cho mật thám.",
-    time: 40,
+    howto: "Đọc biên bản và manh mối. Chọn một lời khai và một vật chứng mâu thuẫn với nhau rồi bấm Đối chất. Có hai vụ, vụ sau khó hơn.",
+    win: "Kẻ chỉ điểm bị vạch mặt và cô lập. Các cơ sở còn lại kịp đổi địa điểm.",
+    lose: "Đối chất chưa trúng, kẻ chỉ điểm vẫn ẩn trong hàng ngũ và tiếp tục báo cho mật thám.",
+    time: 100,
     fact: "Cùng với khủng bố, thực dân Pháp dùng mật thám, mua chuộc kẻ phản bội để phá tổ chức Đảng. Nguyên tắc hoạt động bí mật, đơn tuyến giúp hạn chế thiệt hại và kịp thời cô lập kẻ phản bội.",
     mechanism: "Cảnh giác, cô lập kẻ phản bội để bảo vệ tổ chức",
     sources: [SRC_GT],
@@ -695,12 +696,12 @@ export const MISSIONS: Mission[] = [
     art: "macau-map",
     brief: [
       "Ma Cao, cuối tháng 3/1935. Tại một địa điểm ở phố Quan Công, Đại hội đại biểu lần thứ nhất của Đảng sắp khai mạc.",
-      "{ten} được giao gác cửa nơi họp: kiểm tra ám hiệu và giấy tờ của từng người gõ cửa, chỉ mời đúng đại biểu vào, khéo léo mời người lạ ra để giữ bí mật cuộc họp.",
+      "{ten} gác ca cuối ở cửa nơi họp. Mỗi người gõ cửa phải đưa tờ báo tín vật, giống hệt tờ báo gốc trong tay {ten}. Tờ báo có một chỗ khác, dù rất nhỏ, là người lạ hoặc tín vật giả.",
     ],
-    howto: "So câu khách đáp với thẻ ám hiệu. Từ khách thứ 7 xem thêm dấu trên giấy giới thiệu, từ khách thứ 14 so mép nửa mảnh giấy. Đúng hết: Mời vào; sai một điểm: Mời ra.",
+    howto: "So tờ báo khách đưa với tờ gốc. Có chỗ khác thì chạm vào chỗ đó để mời ra; giống hệt thì bấm Giống hệt · Mời vào. Điện thoại: bấm Xem tờ của bạn để lật.",
     win: "Bạn giữ cửa chặt chẽ. Đủ 13 đại biểu đã vào nơi họp, Đại hội khai mạc an toàn.",
     lose: "Cửa nơi họp còn nhiều sơ hở, đồng chí phụ trách phải kiểm tra lại nhiều lượt. Đủ 13 đại biểu vẫn vào nơi họp, Đại hội khai mạc đúng hẹn.",
-    time: 110,
+    time: 120,
     fact: "Từ ngày 27 đến 31/3/1935, Đại hội đại biểu lần thứ nhất của Đảng họp tại một địa điểm ở phố Quan Công (Ma Cao) với 13 đại biểu thay mặt cho các đảng bộ trong nước và các tổ chức đảng ở nước ngoài. Đồng chí Hà Huy Tập chủ trì Đại hội; đồng chí Lê Hồng Phong vắng mặt vì đang dẫn đoàn đại biểu của Đảng đi dự Đại hội VII Quốc tế Cộng sản.",
     mechanism: "Khôi phục hệ thống tổ chức từ Trung ương đến địa phương, từ trong nước ra ngoài nước",
     sources: [SRC_GT, SRC_NB, SRC_ND_HHT, SRC_DDDN_DH1],
@@ -708,7 +709,7 @@ export const MISSIONS: Mission[] = [
 ];
 
 /** Thời lượng ước tính của một lượt chơi (hiện ở trang chủ, luật chơi, phòng chờ). */
-export const PLAY_TIME = "khoảng 18 phút";
+export const PLAY_TIME = "khoảng 20 phút";
 
 export const MISSION = Object.fromEntries(MISSIONS.map((m) => [m.id, m])) as Record<string, Mission>;
 export const TOTAL = MISSIONS.length;

@@ -7,7 +7,7 @@ import { Stamp } from "@/components/kit/Stamp";
 import { Typed } from "@/components/kit/Typed";
 import { TIMELINE_COUNT, TIMELINE_EVENTS } from "@/game/data/minis";
 import { sfx } from "@/lib/sfx";
-import { mulberry32, useBox, useFinishOnce } from "./shared";
+import { mulberry32, qa, useBox, useFinishOnce } from "./shared";
 import { CellTable, Masthead, SlipPaper, Slot, TONES, type Rect, type SlipLook } from "./timeline-scene";
 import type { MiniProps } from "./types";
 
@@ -302,8 +302,8 @@ export function Timeline({ seconds, startedAt, onFinish }: MiniProps) {
       data-placed={placed.length}
       data-total={sorted.length}
       data-wrong={wrongTaps}
-      data-expected={expected}
-      data-sequence={sorted.map((e) => e.id).join(",")}
+      {...qa({ "data-expected": expected })}
+      {...qa({ "data-sequence": sorted.map((e) => e.id).join(",") })}
     >
       <CellTable />
       {box.w > 0 && (

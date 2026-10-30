@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { Copy, Crown, Flag, Loader2, Play, Plus, Square, Users } from "lucide-react";
+import { Copy, Crown, EyeOff, Flag, Loader2, Play, Plus, Square, TriangleAlert, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
@@ -10,7 +10,7 @@ import { CHAPTERS, MISSIONS, PLAY_TIME } from "@/game/story";
 import { Btn } from "@/components/kit/Btn";
 import { PartyFlag } from "@/components/kit/PartyFlag";
 import { Stamp } from "@/components/kit/Stamp";
-import { useRoom, type RoomView } from "@/components/play/Standings";
+import { useRoom, type RoomPlayer, type RoomView } from "@/components/play/Standings";
 import { useOrigin } from "@/lib/useOrigin";
 import { cn } from "@/lib/cn";
 
@@ -237,7 +237,10 @@ function RaceView({ room, canControl, busy, onEnd }: { room: RoomView; canContro
             <motion.li layout key={p.id} className={cn("flex items-center gap-3 rounded-[2px] px-3 py-2", p.rank <= 3 ? "bg-white/[0.08]" : "bg-white/[0.03]")}>
               <span className={cn("w-7 text-center font-head text-[20px] font-bold", p.rank === 1 ? "text-gold" : "text-cream/60")}>{p.rank === 1 ? <Crown className="mx-auto h-5 w-5" /> : p.rank}</span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate font-type text-[16px] font-bold">{p.name}</span>
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate font-type text-[16px] font-bold">{p.name}</span>
+                  <Flags p={p} />
+                </span>
                 <span className="mt-1 flex gap-[2px] sm:hidden" aria-hidden>
                   {MISSIONS.map((m, i) => (
                     <span key={m.id} className={cn("h-1.5 flex-1 rounded-[1px]", i < p.done ? "bg-gold" : "bg-cream/15")} />
@@ -249,6 +252,7 @@ function RaceView({ room, canControl, busy, onEnd }: { room: RoomView; canContro
             </motion.li>
           ))}
         </ol>
+        <FlagLegend players={room.players} />
         {canControl && (
           <Btn tone="dark" className="mt-3" onClick={onEnd} disabled={busy}>
             <Square className="h-4 w-4" /> Kết thúc trận, chốt điểm
@@ -300,7 +304,10 @@ function PodiumView({ room }: { room: RoomView }) {
           {room.players.map((p) => (
             <li key={p.id} className="flex items-center gap-3 border-b border-dotted border-ink/25 py-1.5">
               <span className="w-7 text-center font-head text-[17px] font-bold text-ink-2">{p.rank}</span>
-              <span className="min-w-0 flex-1 truncate font-type text-[15px] font-bold text-ink">{p.name}</span>
+              <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                <span className="truncate font-type text-[15px] font-bold text-ink">{p.name}</span>
+                <Flags p={p} light />
+              </span>
               <span className="font-type text-[12px] text-ink-2">{p.correct}/{MISSIONS.length}</span>
               <span className="w-20 text-right font-head text-[19px] font-bold tabular-nums text-ink">{p.total.toLocaleString("vi-VN")}</span>
             </li>
@@ -311,5 +318,45 @@ function PodiumView({ room }: { room: RoomView }) {
         </Btn>
       </div>
     </div>
+  );
+}
+
+/**
+ * Dấu hiệu cần chủ phòng để ý (không tự trừ điểm): số nhiệm vụ nộp nhanh bất thường hoặc không đối chiếu được thời gian
+ * (điểm các nhiệm vụ đó đã bị server giảm), số lần rời màn hình trò chơi trong lúc làm nhiệm vụ.
+ */
+function Flags({ p, light = false }: { p: RoomPlayer; light?: boolean }) {
+  const flags = p.flags ?? 0;
+  const away = p.away ?? 0;
+  if (!flags && !away) return null;
+  return (
+    <span className="flex shrink-0 items-center gap-1 font-head text-[12px] font-bold leading-none">
+      {flags > 0 && (
+        <span title={`${flags} nhiệm vụ nộp nhanh bất thường hoặc không đối chiếu được thời gian`} className={cn("flex items-center gap-0.5 rounded-[2px] px-1 py-0.5", light ? "bg-stamp/15 text-stamp" : "bg-[#b3261e]/30 text-[#ff9b8f]")}>
+          <TriangleAlert className="h-3.5 w-3.5" />
+          {flags}
+        </span>
+      )}
+      {away > 0 && (
+        <span title={`Rời màn hình trò chơi ${away} lần trong lúc làm nhiệm vụ`} className={cn("flex items-center gap-0.5 rounded-[2px] px-1 py-0.5", light ? "bg-[#a35d0c]/15 text-[#8a4b0c]" : "bg-[#f4c430]/20 text-[#ffd77a]")}>
+          <EyeOff className="h-3.5 w-3.5" />
+          {away}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function FlagLegend({ players }: { players: RoomPlayer[] }) {
+  if (!players.some((p) => (p.flags ?? 0) > 0 || (p.away ?? 0) > 0)) return null;
+  return (
+    <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-text text-[12px] leading-snug text-cream/60">
+      <span className="flex items-center gap-1">
+        <TriangleAlert className="h-3.5 w-3.5 text-[#ff9b8f]" /> nộp nhanh bất thường, điểm đã bị giảm
+      </span>
+      <span className="flex items-center gap-1">
+        <EyeOff className="h-3.5 w-3.5 text-[#ffd77a]" /> số lần rời màn hình khi làm bài
+      </span>
+    </p>
   );
 }
