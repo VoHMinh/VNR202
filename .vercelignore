@@ -1,0 +1,8 @@
+# Không tải lên Vercel: thư viện và bản build trên máy, dữ liệu phòng chơi thử, ảnh gốc tải về, cấu hình cục bộ.
+node_modules
+.next
+.data
+.art-cache
+.claude
+*.tsbuildinfo
+.env*

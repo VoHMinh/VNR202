@@ -1,6 +1,7 @@
 // Phòng chơi cho cả lớp. Không cần database:
 // - Mặc định: RAM của tiến trình Node + file .data/rooms.json làm bản sao (chạy trên máy tính của giảng viên).
-// - Nếu có UPSTASH_REDIS_REST_URL và UPSTASH_REDIS_REST_TOKEN: dùng Upstash Redis (khi đưa lên Vercel). Dữ liệu tự hết hạn.
+// - Nếu có UPSTASH_REDIS_REST_URL và UPSTASH_REDIS_REST_TOKEN (hoặc KV_REST_API_URL và KV_REST_API_TOKEN do tích hợp
+//   Upstash trên Vercel tạo ra): dùng Upstash Redis (khi đưa lên Vercel). Dữ liệu tự hết hạn.
 import "server-only";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -233,10 +234,10 @@ class RedisStore implements Store {
   }
 }
 
-export const store: Store =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new RedisStore(process.env.UPSTASH_REDIS_REST_URL, process.env.UPSTASH_REDIS_REST_TOKEN)
-    : new MemoryStore();
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+
+export const store: Store = REDIS_URL && REDIS_TOKEN ? new RedisStore(REDIS_URL, REDIS_TOKEN) : new MemoryStore();
 
 /* ───────────────────────── Bảng xếp hạng ───────────────────────── */
 
