@@ -7,3 +7,4 @@ Nhat ky cac pull request nho cua repo VNR202.
 - Cap nhat nhat ky lan 3 (2026-11-14)
 - Cap nhat nhat ky lan 4 (2026-11-14)
 - Cap nhat nhat ky lan 5 (2026-11-14)
+- Cap nhat nhat ky lan 6 (2026-11-14)
